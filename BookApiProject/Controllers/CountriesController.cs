@@ -8,10 +8,10 @@
 
     [Route("api/[countroller]")]
     [ApiController]
-    public class CountryController : Controller
+    public class CountriesController : Controller
     {
         private ICountryRepository countryRepository;
-        public CountryController(ICountryRepository countryRepository)
+        public CountriesController(ICountryRepository countryRepository)
         {
             this.countryRepository = countryRepository;
         }
