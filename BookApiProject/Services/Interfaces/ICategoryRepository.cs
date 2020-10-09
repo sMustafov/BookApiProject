@@ -9,5 +9,6 @@
         ICollection<Category> GetAllCategoriesForBook(int bookId);
         ICollection<Book> GetAllBooksForCategory(int countryId);
         bool CategoryExists(int categoryId);
+        bool IsDuplicateCategoryName(int categoryId, string categoryName);
     }
 }

@@ -2,6 +2,7 @@
 {
     using BookApiProject.Dtos;
     using BookApiProject.Services;
+    using BookApiProject.Services.Interfaces;
     using Microsoft.AspNetCore.Mvc;
     using System.Collections.Generic;
 
@@ -10,9 +11,11 @@
     public class CategoriesController : Controller
     {
         private ICategoryRepository categoryRepository;
-        public CategoriesController(ICategoryRepository categoryRepository)
+        private IBookRepository bookRepository;
+        public CategoriesController(ICategoryRepository categoryRepository, IBookRepository bookRepository)
         {
             this.categoryRepository = categoryRepository;
+            this.bookRepository = bookRepository;
         }
 
         // api/categories
@@ -76,7 +79,11 @@
         [ProducesResponseType(200, Type = typeof(IEnumerable<CategoryDto>))]
         public IActionResult GetAllCategoriesForABook(int bookId)
         {
-            // TODO - Validate the book exists
+            if (!bookRepository.BookExists(bookId))
+            {
+                return NotFound();
+            }
+
             var categories = this.categoryRepository.GetAllCategoriesForBook(bookId);
 
             if (!ModelState.IsValid)

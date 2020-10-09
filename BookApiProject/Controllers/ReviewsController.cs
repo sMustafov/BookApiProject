@@ -3,21 +3,18 @@
     using BookApiProject.Dtos;
     using BookApiProject.Services.Interfaces;
     using Microsoft.AspNetCore.Mvc;
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
 
     [Route("api/[controller]")]
     [ApiController]
-    public class ReviewController : Controller
+    public class ReviewsController : Controller
     {
         private IReviewRepository reviewRepository;
-        private IReviewerRepository reviewerRepository;
+        private IBookRepository bookRepository;
 
-        public ReviewController(IReviewRepository reviewRepository, IReviewerRepository reviewerRepository)
+        public ReviewsController(IReviewRepository reviewRepository, IBookRepository bookRepository)
         {
-            this.reviewerRepository = reviewerRepository;
+            this.bookRepository = bookRepository;
             this.reviewRepository = reviewRepository;
         }
 
@@ -85,7 +82,10 @@
         [ProducesResponseType(404)]
         public IActionResult GetReviewsForABook(int bookId)
         {
-            // TODO - valite book
+            if (!this.bookRepository.BookExists(bookId))
+            {
+                return NotFound();
+            }
 
             var reviews = this.reviewRepository.GetReviewsOfABook(bookId);
 

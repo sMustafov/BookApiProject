@@ -41,5 +41,18 @@
                     .Select(c => c.Country)
                     .FirstOrDefault();
         }
+        public bool IsDuplicateCountryName(int countryId, string countryName)
+        {
+            var country = this.countryContext.Countries
+                    .Where(c => c.Name.Trim().ToUpper() == countryName.Trim().ToUpper() && c.Id != countryId)
+                    .FirstOrDefault();
+
+            if (country == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

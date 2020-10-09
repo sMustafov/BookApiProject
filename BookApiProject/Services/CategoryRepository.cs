@@ -42,5 +42,18 @@
                     .Where(c => c.Id == categoryId)
                     .FirstOrDefault();
         }
+        public bool IsDuplicateCategoryName(int categoryId, string categoryName)
+        {
+            var category = this.categoryContext.Categories
+                    .Where(c => c.Name.Trim().ToUpper() == categoryName.Trim().ToUpper() && c.Id != categoryId)
+                    .FirstOrDefault();
+
+            if(category == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

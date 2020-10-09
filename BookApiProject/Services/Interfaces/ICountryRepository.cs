@@ -9,5 +9,6 @@
         Country GetCountryOfAnAuthor(int authorId);
         ICollection<Author> GetAuthorsFromCountry(int countryId);
         bool CountryExists(int countryId);
+        bool IsDuplicateCountryName(int countryId, string countryName);
     }
 }
