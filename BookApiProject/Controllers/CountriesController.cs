@@ -6,7 +6,7 @@
     using System.Collections.Generic;
     using System.Linq;
 
-    [Route("api/[countroller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class CountriesController : Controller
     {
@@ -94,6 +94,40 @@
             };
 
             return Ok(countryDto);
+        }
+
+        //api/countries/countryId/authors
+        [HttpGet("{countryId}/authors")]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<AuthorDto>))]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
+        public IActionResult GetAuthorsFromACountry(int countryId)
+        {
+            if (!this.countryRepository.CountryExists(countryId))
+            {
+                return NotFound();
+            }
+
+            var authors = this.countryRepository.GetAuthorsFromCountry(countryId);
+
+            if (!ModelState.IsValid)
+            { 
+                return BadRequest(ModelState); 
+            }
+
+            var authorsDto = new List<AuthorDto>();
+
+            foreach (var author in authors)
+            {
+                authorsDto.Add(new AuthorDto
+                {
+                    Id = author.Id,
+                    FirstName = author.FirstName,
+                    LastName = author.LastName
+                });
+            }
+
+            return Ok(authorsDto);
         }
     }
 }
