@@ -14,6 +14,28 @@
         {
             this.reviewContext = reviewContext;
         }
+
+        public bool CreateReview(Review review)
+        {
+            this.reviewContext.Add(review);
+            
+            return Save();
+        }
+
+        public bool DeleteReview(Review review)
+        {
+            this.reviewContext.Remove(review);
+            
+            return Save();
+        }
+
+        public bool DeleteReviews(List<Review> reviews)
+        {
+            this.reviewContext.RemoveRange(reviews);
+            
+            return Save();
+        }
+
         public Book GetBookOfAReview(int reviewId)
         {
             var bookId = this.reviewContext.Reviews
@@ -50,6 +72,25 @@
         {
             return this.reviewContext.Reviews
                     .Any(r => r.Id == reviewId);
+        }
+
+        public bool Save()
+        {
+            var saved = this.reviewContext.SaveChanges();
+
+            if (saved < 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool UpdateReview(Review review)
+        {
+            this.reviewContext.Update(review);
+            
+            return Save();
         }
     }
 }

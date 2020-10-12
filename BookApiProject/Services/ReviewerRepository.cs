@@ -12,6 +12,21 @@
         {
             this.reviewerContext = reviewerContext;
         }
+
+        public bool CreateReviewer(Reviewer reviewer)
+        {
+            this.reviewerContext.Add(reviewer);
+
+            return Save();
+        }
+
+        public bool DeleteReviewer(Reviewer reviewer)
+        {
+            this.reviewerContext.Remove(reviewer);
+            
+            return Save();
+        }
+
         public Reviewer GetReviewer(int reviewerId)
         {
             return this.reviewerContext.Reviewers
@@ -45,6 +60,25 @@
         {
             return this.reviewerContext.Reviewers
                     .Any(r => r.Id == reviewerId);
+        }
+
+        public bool Save()
+        {
+            var saved = this.reviewerContext.SaveChanges();
+
+            if (saved < 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool UpdateReviewer(Reviewer reviewer)
+        {
+            this.reviewerContext.Update(reviewer);
+
+            return Save();
         }
     }
 }

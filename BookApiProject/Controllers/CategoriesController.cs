@@ -1,10 +1,12 @@
 ﻿namespace BookApiProject.Controllers
 {
     using BookApiProject.Dtos;
+    using BookApiProject.Models;
     using BookApiProject.Services;
     using BookApiProject.Services.Interfaces;
     using Microsoft.AspNetCore.Mvc;
     using System.Collections.Generic;
+    using System.Linq;
 
     [Route("api/[controller]")]
     [ApiController]
@@ -137,6 +139,130 @@
             }
 
             return Ok(booksDto);
+        }
+
+        // api/categories
+        [HttpPost]
+        [ProducesResponseType(201, Type = typeof(Category))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(422)]
+        [ProducesResponseType(500)]
+        public IActionResult CreateCategory([FromBody] Category categoryToCreate)
+        {
+            if (categoryToCreate == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var category = this.categoryRepository.GetCategories()
+                            .Where(c => c.Name.Trim().ToUpper() == categoryToCreate.Name.Trim().ToUpper())
+                            .FirstOrDefault();
+
+            if (category != null)
+            {
+                ModelState.AddModelError("", $"Category {categoryToCreate.Name} already exists");
+                
+                return StatusCode(422, ModelState);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.categoryRepository.CreateCategory(categoryToCreate))
+            {
+                ModelState.AddModelError("", $"Something went wrong saving {categoryToCreate.Name}");
+                
+                return StatusCode(500, ModelState);
+            }
+
+            return CreatedAtRoute("GetCategory", new { categoryId = categoryToCreate.Id }, categoryToCreate);
+        }
+
+        // api/categories/categoryId
+        [HttpPut("{categoryId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(422)]
+        [ProducesResponseType(500)]
+        public IActionResult UpdateCategory(int categoryId, [FromBody] Category updatedCategoryInfo)
+        {
+            if (updatedCategoryInfo == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (categoryId != updatedCategoryInfo.Id)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.categoryRepository.CategoryExists(categoryId))
+            {
+                return NotFound();
+            }
+
+            if (this.categoryRepository.IsDuplicateCategoryName(categoryId, updatedCategoryInfo.Name))
+            {
+                ModelState.AddModelError("", $"Category {updatedCategoryInfo.Name} already exists");
+                
+                return StatusCode(422, ModelState);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.categoryRepository.UpdateCategory(updatedCategoryInfo))
+            {
+                ModelState.AddModelError("", $"Something went wrong updating {updatedCategoryInfo.Name}");
+                
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        // api/categories/categoryId
+        [HttpDelete("{categoryId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(409)]
+        [ProducesResponseType(500)]
+        public IActionResult DeleteCategory(int categoryId)
+        {
+            if (!this.categoryRepository.CategoryExists(categoryId))
+            {
+                return NotFound();
+            }
+
+            var categoryToDelete = this.categoryRepository.GetCategory(categoryId);
+
+            if (this.categoryRepository.GetAllBooksForCategory(categoryId).Count() > 0)
+            {
+                ModelState.AddModelError("", $"Category {categoryToDelete.Name} " +
+                                              "cannot be deleted because it is used by at least one book");
+                
+                return StatusCode(409, ModelState);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.categoryRepository.DeleteCategory(categoryToDelete))
+            {
+                ModelState.AddModelError("", $"Something went wrong deleting {categoryToDelete.Name}");
+            
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
         }
     }
 }

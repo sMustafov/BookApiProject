@@ -1,18 +1,22 @@
 ﻿namespace BookApiProject.Controllers
 {
     using BookApiProject.Dtos;
+    using BookApiProject.Models;
     using BookApiProject.Services.Interfaces;
     using Microsoft.AspNetCore.Mvc;
     using System.Collections.Generic;
+    using System.Linq;
 
     [Route("api/[controller]")]
     [ApiController]
     public class ReviewersController : Controller
     {
         private IReviewerRepository reviewerRepository;
-        public ReviewersController(IReviewerRepository reviewerRepository)
+        private IReviewRepository reviewRepository;
+        public ReviewersController(IReviewerRepository reviewerRepository, IReviewRepository reviewRepository)
         {
             this.reviewerRepository = reviewerRepository;
+            this.reviewRepository = reviewRepository;
         }
 
         // api/reviewers
@@ -133,6 +137,113 @@
             };
 
             return Ok(reviewerDto);
+        }
+
+        // api/reviewers
+        [HttpPost]
+        [ProducesResponseType(201, Type = typeof(Reviewer))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public IActionResult CreateReviewer([FromBody] Reviewer reviewerToCreate)
+        {
+            if (reviewerToCreate == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.reviewerRepository.CreateReviewer(reviewerToCreate))
+            {
+                ModelState.AddModelError("", $"Something went wrong saving " +
+                                            $"{reviewerToCreate.FirstName} {reviewerToCreate.LastName}");
+                
+                return StatusCode(500, ModelState);
+            }
+
+            return CreatedAtRoute("GetReviewer", new { reviewerId = reviewerToCreate.Id }, reviewerToCreate);
+        }
+
+        // api/reviewers/reviewerId
+        [HttpPut("{reviewerId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult UpdateReviewer(int reviewerId, [FromBody] Reviewer updatedReviewerInfo)
+        {
+            if (updatedReviewerInfo == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (reviewerId != updatedReviewerInfo.Id)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.reviewerRepository.ReviewerExists(reviewerId))
+            {
+                return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.reviewerRepository.UpdateReviewer(updatedReviewerInfo))
+            {
+                ModelState.AddModelError("", $"Something went wrong updating " +
+                                            $"{updatedReviewerInfo.FirstName} {updatedReviewerInfo.LastName}");
+                
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        // api/reviewers/reviewerId
+        [HttpDelete("{reviewerId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult DeleteReviewer(int reviewerId)
+        {
+            if (!this.reviewerRepository.ReviewerExists(reviewerId))
+            {
+                return NotFound();
+            }
+
+            var reviewerToDelete = this.reviewerRepository.GetReviewer(reviewerId);
+            var reviewsToDelete = this.reviewerRepository.GetReviewsByReviewer(reviewerId);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.reviewerRepository.DeleteReviewer(reviewerToDelete))
+            {
+                ModelState.AddModelError("", $"Something went wrong deleting " +
+                                            $"{reviewerToDelete.FirstName} {reviewerToDelete.LastName}");
+                
+                return StatusCode(500, ModelState);
+            }
+
+            if (!this.reviewRepository.DeleteReviews(reviewsToDelete.ToList()))
+            {
+                ModelState.AddModelError("", $"Something went wrong deleting reviews by" +
+                                            $"{reviewerToDelete.FirstName} {reviewerToDelete.LastName}");
+                
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
         }
     }
 }

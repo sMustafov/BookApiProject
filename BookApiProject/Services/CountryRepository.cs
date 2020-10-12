@@ -16,6 +16,21 @@
             return this.countryContext.Countries
                     .Any(c => c.Id == countryId); 
         }
+
+        public bool CreateCountry(Country country)
+        {
+            this.countryContext.Add(country);
+
+            return Save();
+        }
+
+        public bool DeleteCountry(Country country)
+        {
+            this.countryContext.Remove(country);
+
+            return Save();
+        }
+
         public ICollection<Author> GetAuthorsFromCountry(int countryId)
         {
             return this.countryContext.Authors
@@ -53,6 +68,25 @@
             }
 
             return true;
+        }
+
+        public bool Save()
+        {
+            var saved = this.countryContext.SaveChanges();
+
+            if(saved < 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool UpdateCountry(Country country)
+        {
+            this.countryContext.Update(country);
+            
+            return Save();
         }
     }
 }

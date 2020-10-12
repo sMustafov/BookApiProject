@@ -1,6 +1,7 @@
 ﻿namespace BookApiProject.Controllers
 {
     using BookApiProject.Dtos;
+    using BookApiProject.Models;
     using BookApiProject.Services.Interfaces;
     using Microsoft.AspNetCore.Mvc;
     using System.Collections.Generic;
@@ -11,11 +12,13 @@
     {
         private IReviewRepository reviewRepository;
         private IBookRepository bookRepository;
+        private IReviewerRepository reviewerRepository;
 
-        public ReviewsController(IReviewRepository reviewRepository, IBookRepository bookRepository)
+        public ReviewsController(IReviewRepository reviewRepository, IBookRepository bookRepository, IReviewerRepository reviewerRepository)
         {
             this.bookRepository = bookRepository;
             this.reviewRepository = reviewRepository;
+            this.reviewerRepository = reviewerRepository;
         }
 
         // api/reviews
@@ -137,6 +140,138 @@
             };
 
             return Ok(bookDto);
+        }
+
+        // api/reviews
+        [HttpPost]
+        [ProducesResponseType(201, Type = typeof(Review))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult CreateReview([FromBody] Review reviewToCreate)
+        {
+            if (reviewToCreate == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.reviewerRepository.ReviewerExists(reviewToCreate.Reviewer.Id))
+            {
+                ModelState.AddModelError("", "Reviewer doesn't exist!");
+            }
+
+            if (!this.bookRepository.BookExists(reviewToCreate.Book.Id))
+            {
+                ModelState.AddModelError("", "Book doesn't exist!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(404, ModelState);
+            }
+
+            reviewToCreate.Book = this.bookRepository.GetBook(reviewToCreate.Book.Id);
+            reviewToCreate.Reviewer = this.reviewerRepository.GetReviewer(reviewToCreate.Reviewer.Id);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.reviewRepository.CreateReview(reviewToCreate))
+            {
+                ModelState.AddModelError("", $"Something went wrong saving the review");
+                
+                return StatusCode(500, ModelState);
+            }
+
+            return CreatedAtRoute("GetReview", new { reviewId = reviewToCreate.Id }, reviewToCreate);
+        }
+
+        // api/reviews/reviewId
+        [HttpPut("{reviewId}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult UpdateReview(int reviewId, [FromBody] Review reviewToUpdate)
+        {
+            if (reviewToUpdate == null)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (reviewId != reviewToUpdate.Id)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.reviewRepository.ReviewExists(reviewId))
+            {
+                ModelState.AddModelError("", "Review doesn't exist!");
+            }
+
+            if (!this.reviewerRepository.ReviewerExists(reviewToUpdate.Reviewer.Id))
+            {
+                ModelState.AddModelError("", "Reviewer doesn't exist!");
+            }
+
+            if (!this.bookRepository.BookExists(reviewToUpdate.Book.Id))
+            {
+                ModelState.AddModelError("", "Book doesn't exist!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return StatusCode(404, ModelState);
+            }
+
+            reviewToUpdate.Book = this.bookRepository.GetBook(reviewToUpdate.Book.Id);
+            reviewToUpdate.Reviewer = this.reviewerRepository.GetReviewer(reviewToUpdate.Reviewer.Id);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.reviewRepository.UpdateReview(reviewToUpdate))
+            {
+                ModelState.AddModelError("", $"Something went wrong updating the review");
+                
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        //api/reviews/reviewId
+        [HttpDelete("{reviewId}")]
+        [ProducesResponseType(204)] //no content
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult DeleteReview(int reviewId)
+        {
+            if (!this.reviewRepository.ReviewExists(reviewId))
+            {
+                return NotFound();
+            }
+
+            var reviewToDelete = this.reviewRepository.GetReview(reviewId);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (!this.reviewRepository.DeleteReview(reviewToDelete))
+            {
+                ModelState.AddModelError("", $"Something went wrong deleting review");
+                
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
         }
     }
 }

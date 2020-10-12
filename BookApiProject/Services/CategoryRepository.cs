@@ -55,5 +55,38 @@
 
             return true;
         }
+
+        public bool CreateCategory(Category category)
+        {
+            this.categoryContext.Add(category);
+
+            return Save();
+        }
+
+        public bool UpdateCategory(Category category)
+        {
+            this.categoryContext.Update(category);
+
+            return Save();
+        }
+
+        public bool DeleteCategory(Category category)
+        {
+            this.categoryContext.Remove(category);
+
+            return Save();
+        }
+
+        public bool Save()
+        {
+            var saved = this.categoryContext.SaveChanges();
+
+            if (saved < 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }
