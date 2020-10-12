@@ -6,7 +6,6 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading.Tasks;
 
     public class BookRepository : IBookRepository
     {
@@ -25,6 +24,49 @@
         {
             return this.bookContext.Books
                     .Any(b => b.Isbn == bookIsbn);
+        }
+
+        public bool CreateBook(List<int> authorsId, List<int> categoriesId, Book book)
+        {
+            var authors = this.bookContext.Authors
+                    .Where(a => authorsId.Contains(a.Id))
+                    .ToList();
+            var categories = this.bookContext.Categories
+                    .Where(c => categoriesId.Contains(c.Id))
+                    .ToList();
+
+            foreach (var author in authors)
+            {
+                var bookAuthor = new BookAuthor()
+                {
+                    Author = author,
+                    Book = book
+                };
+
+                this.bookContext.Add(bookAuthor);
+            }
+
+            foreach (var category in categories)
+            {
+                var bookCategory = new BookCategory()
+                {
+                    Category = category,
+                    Book = book
+                };
+
+                this.bookContext.Add(bookCategory);
+            }
+
+            this.bookContext.Add(book);
+
+            return Save();
+        }
+
+        public bool DeleteBook(Book book)
+        {
+            this.bookContext.Remove(book);
+            
+            return Save();
         }
 
         public Book GetBook(int bookId)
@@ -71,6 +113,65 @@
             }
 
             return true;
+        }
+
+        public bool Save()
+        {
+            var saved = this.bookContext.SaveChanges();
+
+            if (saved < 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool UpdateBook(List<int> authorsId, List<int> categoriesId, Book book)
+        {
+            var authors = this.bookContext.Authors
+                    .Where(a => authorsId.Contains(a.Id))
+                    .ToList();
+
+            var categories = this.bookContext.Categories
+                    .Where(c => categoriesId.Contains(c.Id))
+                    .ToList();
+
+
+            var bookAuthorsToDelete = this.bookContext.BookAuthors
+                    .Where(b => b.BookId == book.Id);
+
+            var bookCategoriesToDelete = this.bookContext.BookCategories
+                    .Where(b => b.BookId == book.Id);
+
+            this.bookContext.RemoveRange(bookAuthorsToDelete);
+            this.bookContext.RemoveRange(bookCategoriesToDelete);
+
+            foreach (var author in authors)
+            {
+                var bookAuthor = new BookAuthor()
+                {
+                    Author = author,
+                    Book = book
+                };
+
+                this.bookContext.Add(bookAuthor);
+            }
+
+            foreach (var category in categories)
+            {
+                var bookCategory = new BookCategory()
+                {
+                    Category = category,
+                    Book = book
+                };
+
+                this.bookContext.Add(bookCategory);
+            }
+
+            this.bookContext.Update(book);
+
+            return Save();
         }
     }
 }

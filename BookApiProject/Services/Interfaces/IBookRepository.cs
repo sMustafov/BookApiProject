@@ -11,5 +11,10 @@
         bool BookExists(int bookId);
         bool BookExists(string bookIsbn);
         bool IsDuplicateIsbn(int bookId, string bookIsbn);
+
+        bool CreateBook(List<int> authorsId, List<int> categoriesId, Book book);
+        bool UpdateBook(List<int> authorsId, List<int> categoriesId, Book book);
+        bool DeleteBook(Book book);
+        bool Save();
     }
 }

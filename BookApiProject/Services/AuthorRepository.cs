@@ -18,6 +18,19 @@
                     .Any(a => a.Id == authorId);
         }
 
+        public bool CreateAuthor(Author author)
+        {
+            this.authorContext.Add(author);
+            
+            return Save();
+        }
+
+        public bool DeleteAuthor(Author author)
+        {
+            this.authorContext.Remove(author);
+            
+            return Save();
+        }
         public Author GetAuthor(int authorId)
         {
             return this.authorContext.Authors
@@ -46,6 +59,25 @@
                     .Where(a => a.Author.Id == authorId)
                     .Select(b => b.Book)
                     .ToList();
+        }
+
+        public bool Save()
+        {
+            var saved = this.authorContext.SaveChanges();
+
+            if (saved < 0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool UpdateAuthor(Author author)
+        {
+            this.authorContext.Update(author);
+            
+            return Save();
         }
     }
 }
